@@ -56,14 +56,14 @@ NestJS
 
 #### Restaurant
 
-[ ] See Categories
+[x] See Categories
 [ ] See Restaurants by category (pagination)
 [ ] See Restaurants (pagination)
 [ ] See Restaurant
 
 [x] Create Restaurant
 [x] Edit Restaurant
-[ ] Delete Restaurant
+[x] Delete Restaurant
 
 #### Dish
 

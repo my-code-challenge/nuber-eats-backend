@@ -26,5 +26,5 @@ export class Category extends CoreEntity {
 
   @Field(_type => [Restaurant], { nullable: true })
   @OneToMany(_type => Restaurant, restaurant => restaurant.category)
-  restaurant: Restaurant[];
+  restaurants: Restaurant[];
 }

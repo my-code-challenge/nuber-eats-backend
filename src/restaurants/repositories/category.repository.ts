@@ -4,7 +4,8 @@ import { EntityRepository, Repository } from 'typeorm';
 @EntityRepository(Category)
 export class CustomCategoryRepository extends Repository<Category> {
   async getOrCreate(name: string): Promise<Category> {
-    const categoryName = name.trim().toLowerCase().replace(/ +/g, '');
+    // const categoryName = name.trim().toLowerCase().replace(/ +/g, '');
+    const categoryName = name.trim().toLowerCase();
     const categorySlug = categoryName.replace(/ /g, '-');
     let category = await this.findOne({ slug: categorySlug });
 
