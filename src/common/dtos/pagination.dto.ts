@@ -14,4 +14,8 @@ export class PaginationOutput extends CoreOutput {
   @Field(_type => Int, { nullable: true })
   @IsOptional()
   totalPages?: number;
+
+  @Field(_type => Int, { nullable: true })
+  @IsOptional()
+  totalResults?: number;
 }

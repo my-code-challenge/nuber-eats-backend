@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Raw, Repository } from 'typeorm';
 import { User } from 'users/entities/user.entity';
 import { AllCategoriesOutput } from './dtos/all-category.dto';
 import { CategoryInput, CategoryOutput } from './dtos/category.dto';
+// import { CreateMenuInput, CreateMenuOutput } from './dtos/create-menu.dto';
 import {
   CreateRestaurantInput,
   CreateRestaurantOutput,
@@ -16,12 +17,19 @@ import {
   EditRestaurantInput,
   EditRestaurantOutput,
 } from './dtos/edit-restaurant.dto';
+import { RestaurantInput, RestaurantOutput } from './dtos/restaurant.dto';
+import { RestaurantsInput, RestaurantsOutput } from './dtos/restaurants.dto';
+import {
+  SearchRestaurantInput,
+  SearchRestaurantOutput,
+} from './dtos/search-restaurant.dto';
 import { Category } from './entities/category.entity';
 import { Restaurant } from './entities/restaurants.entity';
 import { CustomCategoryRepository } from './repositories/category.repository';
 
 @Injectable()
 export class RestaurantService {
+  private readonly pageView = 5;
   /**
    * @description - https://typeorm.io/#active-record-data-mapper/what-is-the-data-mapper-pattern
    * @param restaurants
@@ -146,6 +154,81 @@ export class RestaurantService {
     }
   }
 
+  async allRestaurants({ page }: RestaurantsInput): Promise<RestaurantsOutput> {
+    try {
+      const [restaurants, totalResults] = await this.restaurants.findAndCount({
+        take: this.pageView,
+        skip: (page - 1) * this.pageView,
+      });
+
+      return {
+        ok: true,
+        restaurants,
+        totalPages: Math.ceil(totalResults / this.pageView),
+        totalResults,
+      };
+    } catch {
+      return {
+        ok: false,
+        error: '카테고리를 불러오는데 실패 하였습니다',
+      };
+    }
+  }
+
+  async findRestaurantById({
+    restaurantId,
+  }: RestaurantInput): Promise<RestaurantOutput> {
+    try {
+      const restaurant = await this.restaurants.findOne(restaurantId, {
+        relations: ['menu'],
+      });
+
+      if (!restaurant) {
+        return {
+          ok: false,
+          error: '존재하지 않는 음식점 입니다',
+        };
+      }
+
+      return {
+        ok: true,
+        restaurant,
+      };
+    } catch {
+      return {
+        ok: false,
+        error: '음식점을 찾을 수 없습니다',
+      };
+    }
+  }
+
+  async searchRestaurantByName({
+    query,
+    page,
+  }: SearchRestaurantInput): Promise<SearchRestaurantOutput> {
+    try {
+      const [restaurants, totalResults] = await this.restaurants.findAndCount({
+        where: {
+          name: Raw(name => `${name} ILIKE '%${query}%'`), // 대소문자 구분을 위해 postgreSQL은 ILIKE를 사용
+        },
+        take: this.pageView,
+        skip: (page - 1) * this.pageView,
+      });
+
+      return {
+        ok: true,
+        restaurants,
+        totalResults,
+        totalPages: Math.ceil(totalResults / this.pageView),
+      };
+    } catch {
+      return {
+        ok: false,
+        error: '잘못된 음식점을 검색 하였습니다',
+      };
+    }
+  }
+
   async allCategories(): Promise<AllCategoriesOutput> {
     try {
       const categories = await this.categories.find();
@@ -173,17 +256,15 @@ export class RestaurantService {
       const category = await this.categories.findOne({ slug });
 
       // pagination
-      const pageView = 5;
       const restaurants = await this.restaurants.find({
         where: { category },
-        take: pageView,
-        skip: (page - 1) * pageView,
+        take: this.pageView,
+        skip: (page - 1) * this.pageView,
       });
 
       category.restaurants = restaurants;
-      const totalPages = Math.ceil(
-        (await this.countRestaurants(category)) / pageView,
-      );
+      const totalResults = await this.countRestaurants(category);
+      const totalPages = Math.ceil(totalResults / this.pageView);
 
       if (!category) {
         return {
@@ -196,6 +277,7 @@ export class RestaurantService {
         ok: true,
         category,
         totalPages,
+        totalResults,
       };
     } catch {
       return {
@@ -204,4 +286,21 @@ export class RestaurantService {
       };
     }
   }
+
+  //   async createMenu(
+  //     owner: User,
+  //     createMenuInput: CreateMenuInput,
+  //   ): Promise<CreateMenuOutput> {
+  //     try {
+
+  //       return {
+  //         ok: true,
+  //       };
+  //     } catch {
+  // return {
+  //   ok: false,
+
+  // }
+  //     }
+  //   }
 }

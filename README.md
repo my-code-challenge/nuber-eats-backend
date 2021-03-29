@@ -3,6 +3,7 @@
 The backend of nuber eats clone
 
 ```bash
+
 NestJS
   ├─src
   │  ├─app.module.ts
@@ -11,6 +12,7 @@ NestJS
   ├─test
   │  └─...test files
   └─eslint,env,prettier etc config files
+
 ```
 
 ## Core Entity:
@@ -44,34 +46,45 @@ NestJS
 
 #### User
 
-[x] Create User/Profile
-[x] Update Profile
-[x] Verify Email
-[x] Login
-[x] Auth Middleware
+- [x] Create User/Profile
+- [x] Update Profile
+- [x] Verify Email
+- [x] Login
+- [x] Auth Middleware
 
 #### Mail
 
-[x] NestJS Mailer
+- [x] NestJS Mailer
 
 #### Restaurant
 
-[x] See Categories
-[ ] See Restaurants by category (pagination)
-[ ] See Restaurants (pagination)
-[ ] See Restaurant
+- [x] See Categories
+- [x] See Restaurants by category (pagination)
+- [x] See Restaurants (pagination)
+- [x] Search Restaurant
+- [x] See Restaurant
 
-[x] Create Restaurant
-[x] Edit Restaurant
-[x] Delete Restaurant
+- [x] Create Restaurant (Owner)
+- [x] Edit Restaurant (Owner)
+- [x] Delete Restaurant (Owner)
 
 #### Dish
 
-[ ] Create Dish
-[ ] Edit Dish
-[ ] Delete Dish
+- [x] Add DishOption Entity
+- [x] Create Dish
+- [ ] Edit Dish
+- [ ] Delete Dish
+
+#### Order
+
+- [ ] Orders CRUD
+- [ ] Orders Subscription
+
+#### Payment
+
+- [ ] 'CRON JOB' Payments (paddle API)
 
 #### TEST
 
-[x] Unit test for User
-[x] E2E test for User
+- [x] Unit test for User
+- [x] E2E test for User
