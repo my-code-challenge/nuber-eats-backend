@@ -1,29 +1,20 @@
-import {
-  Field,
-  InputType,
-  Int,
-  ObjectType,
-  registerEnumType,
-} from '@nestjs/graphql';
-import {
-  IsEnum,
-  IsNumber,
-  IsOptional,
-  IsString,
-  Length,
-} from 'class-validator';
+import { Field, InputType, Int, ObjectType } from '@nestjs/graphql';
+import { IsInt, IsNumber, IsOptional, IsString, Length } from 'class-validator';
 import { CoreEntity } from 'common/entities/core.entity';
 import { Column, Entity, ManyToOne, RelationId } from 'typeorm';
 import { Restaurant } from './restaurants.entity';
 
-export enum Size {
-  XL = 'XL',
-  L = 'L',
-  M = 'M',
-  S = 'S',
-}
+@InputType('MenuChoiceInputType', { isAbstract: true })
+@ObjectType()
+class MenuChoice {
+  @Field(_type => String)
+  @IsString()
+  name: string;
 
-registerEnumType(Size, { name: 'Size' });
+  @Field(_type => Int, { nullable: true })
+  @IsInt()
+  extra?: number;
+}
 
 @InputType('MenuOptionInputType', { isAbstract: true })
 @ObjectType()
@@ -31,18 +22,14 @@ class MenuOption {
   @Field(_type => String)
   name: string;
 
-  @Field(_type => [String], { nullable: true })
+  @Field(_type => [MenuChoice], { nullable: true })
   @IsOptional()
-  choices?: string[];
+  choices?: MenuChoice[];
 
-  @Column({ type: 'enum', enum: Size, nullable: true })
-  @Field(_type => Size)
-  @IsEnum(Size)
+  @Field(_type => Int, { nullable: true })
+  @IsInt()
   @IsOptional()
-  size?: Size;
-
-  @Field(_type => Int)
-  extra: number;
+  extra?: number;
 }
 
 @InputType('MenuInputType', { isAbstract: true })

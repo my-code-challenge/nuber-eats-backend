@@ -17,10 +17,12 @@ import {
   CreateRestaurantInput,
   CreateRestaurantOutput,
 } from './dtos/create-restaurant.dto';
+import { DeleteMenuInput, DeleteMenuOutput } from './dtos/delete-menu.dto';
 import {
   DeleteRestaurantInput,
   DeleteRestaurantOutput,
 } from './dtos/delete-restaurant.dto';
+import { EditMenuInput, EditMenuOutput } from './dtos/edit-menu.dto';
 import {
   EditRestaurantInput,
   EditRestaurantOutput,
@@ -136,5 +138,23 @@ export class MenuResolver {
     @Args('input') createMenuInput: CreateMenuInput,
   ): Promise<CreateMenuOutput> {
     return this.restaurantService.createMenu(owner, createMenuInput);
+  }
+
+  @Mutation(_type => EditMenuOutput)
+  @Role(['Owner'])
+  editMenu(
+    @AuthUser() owner: User,
+    @Args('input') editMenuInput: EditMenuInput,
+  ): Promise<EditMenuOutput> {
+    return this.restaurantService.editMenu(owner, editMenuInput);
+  }
+
+  @Mutation(_type => DeleteMenuOutput)
+  @Role(['Owner'])
+  deleteMenu(
+    @AuthUser() owner: User,
+    @Args('input') deleteMenuInput: DeleteMenuInput,
+  ): Promise<DeleteMenuOutput> {
+    return this.restaurantService.deleteMenu(owner, deleteMenuInput);
   }
 }

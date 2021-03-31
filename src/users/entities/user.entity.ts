@@ -11,6 +11,7 @@ import { InternalServerErrorException } from '@nestjs/common';
 import { IsBoolean, IsEmail, IsEnum, IsString } from 'class-validator';
 import { CoreEntity } from 'common/entities/core.entity';
 import { Restaurant } from 'restaurants/entities/restaurants.entity';
+import { Order } from 'orders/entities/order.entity';
 
 export enum UserRole {
   Client = 'Client',
@@ -47,6 +48,14 @@ export class User extends CoreEntity {
   @Field(_type => [Restaurant])
   @OneToMany(_type => Restaurant, restaurant => restaurant.owner)
   restaurants: Restaurant[];
+
+  @Field(_type => [Order])
+  @OneToMany(_type => Order, order => order.customer)
+  orders: Order[];
+
+  @Field(_type => [Order])
+  @OneToMany(_type => Order, order => order.driver)
+  rides: Order[];
 
   // create hash password
   @BeforeInsert()

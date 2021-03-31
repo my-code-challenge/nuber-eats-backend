@@ -4,15 +4,17 @@ import { Raw, Repository } from 'typeorm';
 import { User } from 'users/entities/user.entity';
 import { AllCategoriesOutput } from './dtos/all-category.dto';
 import { CategoryInput, CategoryOutput } from './dtos/category.dto';
-// import { CreateMenuInput, CreateMenuOutput } from './dtos/create-menu.dto';
+import { CreateMenuInput, CreateMenuOutput } from './dtos/create-menu.dto';
 import {
   CreateRestaurantInput,
   CreateRestaurantOutput,
 } from './dtos/create-restaurant.dto';
+import { DeleteMenuInput, DeleteMenuOutput } from './dtos/delete-menu.dto';
 import {
   DeleteRestaurantInput,
   DeleteRestaurantOutput,
 } from './dtos/delete-restaurant.dto';
+import { EditMenuInput, EditMenuOutput } from './dtos/edit-menu.dto';
 import {
   EditRestaurantInput,
   EditRestaurantOutput,
@@ -24,6 +26,7 @@ import {
   SearchRestaurantOutput,
 } from './dtos/search-restaurant.dto';
 import { Category } from './entities/category.entity';
+import { Menu } from './entities/menu.entity';
 import { Restaurant } from './entities/restaurants.entity';
 import { CustomCategoryRepository } from './repositories/category.repository';
 
@@ -37,6 +40,8 @@ export class RestaurantService {
   constructor(
     @InjectRepository(Restaurant) // == const restaurantsRepository = connection.getRepository(Restaurant);
     private readonly restaurants: Repository<Restaurant>,
+    @InjectRepository(Menu) // == const MenusRepository = connection.getRepository(Menu);
+    private readonly menus: Repository<Menu>,
     private readonly categories: CustomCategoryRepository,
   ) {}
 
@@ -287,20 +292,113 @@ export class RestaurantService {
     }
   }
 
-  //   async createMenu(
-  //     owner: User,
-  //     createMenuInput: CreateMenuInput,
-  //   ): Promise<CreateMenuOutput> {
-  //     try {
+  async createMenu(
+    owner: User,
+    createMenuInput: CreateMenuInput,
+  ): Promise<CreateMenuOutput> {
+    try {
+      const restaurant = await this.restaurants.findOne(
+        createMenuInput.restaurantId,
+      );
 
-  //       return {
-  //         ok: true,
-  //       };
-  //     } catch {
-  // return {
-  //   ok: false,
+      if (!restaurant) {
+        return {
+          ok: false,
+          error: '음식점을 찾지 못했습니다',
+        };
+      }
 
-  // }
-  //     }
-  //   }
+      if (owner.id !== restaurant.ownerId) {
+        return {
+          ok: false,
+          error: '수정이 불가능한 음식점 입니다',
+        };
+      }
+
+      await this.menus.save(
+        this.menus.create({ ...createMenuInput, restaurant }),
+      );
+
+      return {
+        ok: true,
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        ok: false,
+        error: '메뉴 생성중 오류가 발생했습니다',
+      };
+    }
+  }
+
+  async editMenu(
+    owner: User,
+    editMenuInput: EditMenuInput,
+  ): Promise<EditMenuOutput> {
+    try {
+      const menu: Menu = await this.menus.findOne(editMenuInput.menuId, {
+        relations: ['restaurant'],
+      });
+
+      if (!menu) {
+        return {
+          ok: false,
+          error: '메뉴를 찾을 수 없습니다',
+        };
+      }
+
+      if (menu.restaurant.ownerId !== owner.id) {
+        return {
+          ok: false,
+          error: '수정이 불가능한 음식점 입니다',
+        };
+      }
+
+      await this.menus.save([{ id: editMenuInput.menuId, ...editMenuInput }]);
+      return {
+        ok: true,
+      };
+    } catch {
+      return {
+        ok: false,
+        error: '메뉴 수정에 오류가 발생했습니다',
+      };
+    }
+  }
+
+  async deleteMenu(
+    owner: User,
+    { menuId }: DeleteMenuInput,
+  ): Promise<DeleteMenuOutput> {
+    try {
+      const menu = await this.menus.findOne(menuId, {
+        relations: ['restaurant'],
+      });
+
+      if (!menu) {
+        return {
+          ok: false,
+          error: '메뉴를 찾을 수 없습니다',
+        };
+      }
+
+      if (menu.restaurant.ownerId !== owner.id) {
+        return {
+          ok: false,
+          error: '삭제가 불가능한 음식점 입니다',
+        };
+      }
+
+      await this.menus.delete(menuId);
+
+      return {
+        ok: true,
+      };
+    } catch {
+      return {
+        ok: false,
+        error: '메뉴 삭제에 오류가 발생했습니다',
+      };
+    }
+  }
 }

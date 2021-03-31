@@ -68,12 +68,12 @@ NestJS
 - [x] Edit Restaurant (Owner)
 - [x] Delete Restaurant (Owner)
 
-#### Dish
+#### Menu
 
-- [x] Add DishOption Entity
-- [x] Create Dish
-- [ ] Edit Dish
-- [ ] Delete Dish
+- [x] Add MenuOption Entity
+- [x] Create Menu
+- [x] Edit Menu
+- [x] Delete Menu
 
 #### Order
 

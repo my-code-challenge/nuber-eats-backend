@@ -9,6 +9,7 @@ export class EditProfileOutput extends CoreOutput {}
  * @description [PartialType] 컬럼 속성들의 필수값을 선택값으로 변경
  */
 @InputType()
-export class EditProfileInput extends PartialType(
-  PickType(User, ['email', 'password']),
-) {}
+export class EditProfileInput extends PickType(PartialType(User), [
+  'email',
+  'password',
+]) {}
