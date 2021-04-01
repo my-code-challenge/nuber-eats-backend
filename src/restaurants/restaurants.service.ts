@@ -297,9 +297,9 @@ export class RestaurantService {
     createMenuInput: CreateMenuInput,
   ): Promise<CreateMenuOutput> {
     try {
-      const restaurant = await this.restaurants.findOne(
-        createMenuInput.restaurantId,
-      );
+      const restaurant = await this.restaurants.findOne({
+        id: createMenuInput.restaurantId,
+      });
 
       if (!restaurant) {
         return {

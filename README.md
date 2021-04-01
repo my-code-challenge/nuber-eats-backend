@@ -77,7 +77,10 @@ NestJS
 
 #### Order
 
-- [ ] Orders CRUD
+- [x] Create Orders
+- [x] Read Orders
+- [ ] Edit Orders
+- [ ] Delete Orders
 - [ ] Orders Subscription
 
 #### Payment

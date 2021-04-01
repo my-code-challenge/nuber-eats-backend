@@ -22,6 +22,7 @@ import { AuthModule } from 'auth/auth.module';
 import { Menu } from 'restaurants/entities/menu.entity';
 import { OrdersModule } from './orders/orders.module';
 import { Order } from 'orders/entities/order.entity';
+import { OrderItem } from 'orders/entities/order-item.entity';
 
 /**
  * 동적모듈 (forRoot): 설정을 필요로하는 동적인 모듈
@@ -58,7 +59,15 @@ import { Order } from 'orders/entities/order.entity';
       synchronize: process.env.NODE_ENV !== 'prod',
       logging:
         process.env.NODE_ENV !== 'prod' && process.env.NODE_ENV !== 'test',
-      entities: [User, Verification, Restaurant, Category, Menu, Order],
+      entities: [
+        User,
+        Verification,
+        Restaurant,
+        Category,
+        Menu,
+        Order,
+        OrderItem,
+      ],
     }),
     // forRoot: 동적모듈
     GraphQLModule.forRoot({
