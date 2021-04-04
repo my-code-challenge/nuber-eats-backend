@@ -1,10 +1,5 @@
 import * as Joi from 'joi'; // validation config lib
-import {
-  MiddlewareConsumer,
-  Module,
-  NestModule,
-  RequestMethod,
-} from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -12,7 +7,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
 import { User } from 'users/entities/user.entity';
 import { JwtModule } from './jwt/jwt.module';
-import { JwtMiddleware } from 'jwt/jwt.middleware';
 import { Verification } from 'users/entities/verification.entity';
 import { MailModule } from './mail/mail.module';
 import { Restaurant } from 'restaurants/entities/restaurants.entity';
@@ -23,6 +17,7 @@ import { Menu } from 'restaurants/entities/menu.entity';
 import { OrdersModule } from './orders/orders.module';
 import { Order } from 'orders/entities/order.entity';
 import { OrderItem } from 'orders/entities/order-item.entity';
+import { CommonModule } from 'common/common.module';
 
 /**
  * 동적모듈 (forRoot): 설정을 필요로하는 동적인 모듈
@@ -71,8 +66,16 @@ import { OrderItem } from 'orders/entities/order-item.entity';
     }),
     // forRoot: 동적모듈
     GraphQLModule.forRoot({
+      installSubscriptionHandlers: true,
       autoSchemaFile: true, // == autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
-      context: ({ req }) => ({ user: req['user'] }),
+      context: ({ req, connection }) => {
+        const TOKEN_KEY = 'x-jwt';
+        // console.log(connection);
+        // 웹소켓 통신 방식은 request가 존재하지 않음.
+        return {
+          token: req ? req.headers[TOKEN_KEY] : connection.context[TOKEN_KEY],
+        };
+      },
     }),
     JwtModule.forRoot({ privateKey: process.env.PRIVATE_KEY }), // 정적모듈
     MailModule.forRoot({
@@ -84,26 +87,28 @@ import { OrderItem } from 'orders/entities/order-item.entity';
     UsersModule,
     RestaurantsModule,
     OrdersModule,
+    CommonModule,
   ],
   controllers: [],
   providers: [],
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(JwtMiddleware).forRoutes({
-      // '/graphql' 경로에 'POST' 프로토콜 일때만 JwtMiddleware를 적용한다.
-      // path: '/graphql',
-      // method: RequestMethod.POST,
-      path: '*',
-      method: RequestMethod.POST,
-    });
-  }
+export class AppModule {}
+// export class AppModule implements NestModule {
+//   configure(consumer: MiddlewareConsumer): void {
+//     consumer.apply(JwtMiddleware).forRoutes({
+//       // '/graphql' 경로에 'POST' 프로토콜 일때만 JwtMiddleware를 적용한다.
+//       // path: '/graphql',
+//       // method: RequestMethod.POST,
+//       path: '*',
+//       method: RequestMethod.POST,
+//     });
+//   }
 
-  // Function
-  // configure(consumer: MiddlewareConsumer): void {
-  //   consumer.apply(jwtMiddleware).forRoutes({
-  //     path: '*',
-  //     method: RequestMethod.ALL,
-  //   });
-  // }
-}
+//   // Function
+//   // configure(consumer: MiddlewareConsumer): void {
+//   //   consumer.apply(jwtMiddleware).forRoutes({
+//   //     path: '*',
+//   //     method: RequestMethod.ALL,
+//   //   });
+//   // }
+// }

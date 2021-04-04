@@ -1,14 +1,21 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import {
+  NEW_COOKED_ORDER,
+  NEW_PENDING_ORDER,
+  PUB_SUB,
+} from 'common/common.constant';
+import { PubSub } from 'graphql-subscriptions';
 import { Menu, MenuOption } from 'restaurants/entities/menu.entity';
 import { Restaurant } from 'restaurants/entities/restaurants.entity';
 import { Repository } from 'typeorm';
 import { User, UserRole } from 'users/entities/user.entity';
 import { CreateOrderInput, CreateOrderOutput } from './dtos/create-order.dto';
+import { EditOrderInput, EditOrderOutput } from './dtos/edit-order.dto';
 import { GetOrderInput, GetOrderOutput } from './dtos/get-order.dto';
 import { GetOrdersInput, GetOrdersOutput } from './dtos/get-orders.dto';
 import { OrderItem } from './entities/order-item.entity';
-import { Order } from './entities/order.entity';
+import { Order, OrderStatus } from './entities/order.entity';
 
 @Injectable()
 export class OrderService {
@@ -20,6 +27,7 @@ export class OrderService {
     private readonly restaurants: Repository<Restaurant>,
     @InjectRepository(Menu)
     private readonly menus: Repository<Menu>,
+    @Inject(PUB_SUB) private readonly pubSub: PubSub,
   ) {}
 
   async createOrder(
@@ -85,7 +93,8 @@ export class OrderService {
         orderItems.push(orderItem);
       }
 
-      await this.orders.save(
+      /** create order */
+      const order = await this.orders.save(
         this.orders.create({
           customer,
           restaurant,
@@ -93,6 +102,14 @@ export class OrderService {
           items: orderItems,
         }),
       );
+
+      /** response subscription */
+      await this.pubSub.publish(NEW_PENDING_ORDER, {
+        pendingOrders: {
+          order,
+          ownerId: restaurant.ownerId,
+        },
+      });
 
       return {
         ok: true,
@@ -153,6 +170,23 @@ export class OrderService {
     }
   }
 
+  canSeeOrder(user: User, order: Order): boolean {
+    let canSee = true;
+    if (user.role === UserRole.Client && order.customerId !== user.id) {
+      canSee = false;
+    }
+
+    if (user.role === UserRole.Delivery && order.driverId !== user.id) {
+      canSee = false;
+    }
+
+    if (user.role === UserRole.Owner && order.restaurant.ownerId !== user.id) {
+      canSee = false;
+    }
+
+    return canSee;
+  }
+
   async getOrder(
     user: User,
     { id: orderId }: GetOrderInput,
@@ -171,21 +205,7 @@ export class OrderService {
         };
       }
 
-      let canSee = true;
-      if (user.role === UserRole.Client && order.customerId !== user.id) {
-        canSee = false;
-      }
-
-      if (user.role === UserRole.Delivery && order.driverId !== user.id) {
-        canSee = false;
-      }
-
-      if (
-        user.role === UserRole.Owner &&
-        order.restaurant.ownerId !== user.id
-      ) {
-        canSee = false;
-      }
+      const canSee = this.canSeeOrder(user, order);
 
       return {
         ok: canSee,
@@ -196,6 +216,83 @@ export class OrderService {
       return {
         ok: false,
         error: '주문내역을 가져 오는데 실패했습니다',
+      };
+    }
+  }
+
+  async editOrder(
+    user: User,
+    { id: orderId, status }: EditOrderInput,
+  ): Promise<EditOrderOutput> {
+    try {
+      const order = await this.orders.findOne({ id: orderId });
+      if (!order) {
+        return {
+          ok: false,
+          error: '주문내역을 찾을 수 없습니다',
+        };
+      }
+
+      const canSee = this.canSeeOrder(user, order);
+
+      if (!canSee) {
+        return {
+          ok: false,
+          error: '주문을 수정 할 수 없습니다',
+        };
+      }
+
+      let isEdit = true;
+      // 고객 수정 권한 검사
+      if (user.role === UserRole.Client) {
+        // 죄송합니다 수정 할 수 없습니다
+        isEdit = false;
+      }
+
+      // 점장 수정 권한 검사
+      if (user.role === UserRole.Owner) {
+        if (status !== OrderStatus.Cooking && status !== OrderStatus.Cooked) {
+          // 요리중이거나 요리완료일때만 수정 할 수 있습니다
+          isEdit = false;
+        }
+      }
+
+      // 배달원 수정 권한 검사
+      if (user.role === UserRole.Delivery) {
+        if (
+          status !== OrderStatus.PickedUp &&
+          status !== OrderStatus.Delivered
+        ) {
+          // 배달중이거나 배달완료일때만 수정 할 수 있습니다
+          isEdit = false;
+        }
+      }
+
+      if (!isEdit) {
+        return {
+          ok: false,
+          error: '죄송합니다 수정 할 수 없는 권한입니다',
+        };
+      }
+
+      await this.orders.save({
+        id: orderId,
+        status,
+      });
+
+      // 점장 일때만 그리고 변경 상태가 '요리완료' 일때 subscription 실행
+      if (user.role === UserRole.Owner && status === OrderStatus.Cooked) {
+        await this.pubSub.publish(NEW_COOKED_ORDER, {
+          cookedOrders: { ...order, status },
+        });
+      }
+      return {
+        ok: true,
+      };
+    } catch {
+      return {
+        ok: false,
+        error: '주문내역 수정 할 수 없습니다',
       };
     }
   }

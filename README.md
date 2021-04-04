@@ -79,9 +79,12 @@ NestJS
 
 - [x] Create Orders
 - [x] Read Orders
-- [ ] Edit Orders
+- [x] Edit Orders
 - [ ] Delete Orders
-- [ ] Orders Subscription
+- [x] [Orders Subscription](https://www.npmjs.com/package/graphql-subscriptions)
+  - [x] Pending Orders (Owner) `Subscription: newOrder, Trigger: createOrder(newOrder)`
+  - [ ] Read Order Status (Customer, Delivery, Owner) `Subscription: orderUpdate, Trigger: editOrder(orderUpdate)`
+  - [x] Pending Pickup Order (Delivery) / 요리가 완료되면 배달원들에게 알리기 `Subscription: orderUpdate, Trigger: editOrder(orderUpdate)`
 
 #### Payment
 

@@ -37,6 +37,7 @@ export class UserResolver {
   // @UseGuards(AuthGuard) // AuthGuard가 true로 반환되면 me() 실행 false로 반환되면 forbidden resource라는 에러메시지 반환
   @Role(['Any'])
   me(@AuthUser() authUser: User): User {
+    console.log('me', authUser);
     return authUser;
   }
 

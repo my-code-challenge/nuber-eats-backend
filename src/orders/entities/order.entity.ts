@@ -22,12 +22,14 @@ import { OrderItem } from './order-item.entity';
 /**
  * - `Pending` - 대기중
  * - `Cooking` - 요리중
+ * - `Cooked` - 요리완료
  * - `PickedUp` - 배달중
  * - `Delivered` - 배달완료
  */
 export enum OrderStatus {
   Pending = 'Pending',
   Cooking = 'Cooking',
+  Cooked = 'Cooked',
   PickedUp = 'PickedUp',
   Delivered = 'Delivered',
 }
@@ -42,6 +44,7 @@ export class Order extends CoreEntity {
   @ManyToOne(_type => User, user => user.orders, {
     onDelete: 'SET NULL',
     nullable: true,
+    eager: true,
   })
   @IsOptional()
   customer?: User;
@@ -53,6 +56,7 @@ export class Order extends CoreEntity {
   @ManyToOne(_type => User, user => user.rides, {
     onDelete: 'SET NULL',
     nullable: true,
+    eager: true,
   })
   @IsOptional()
   driver?: User;
@@ -64,12 +68,13 @@ export class Order extends CoreEntity {
   @ManyToOne(_type => Restaurant, restaurant => restaurant.orders, {
     onDelete: 'SET NULL',
     nullable: true,
+    eager: true,
   })
   @IsOptional()
   restaurant?: Restaurant;
 
   @Field(_type => [OrderItem])
-  @ManyToMany(_type => OrderItem)
+  @ManyToMany(_type => OrderItem, { eager: true })
   @JoinTable()
   items: OrderItem[];
 
