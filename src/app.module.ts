@@ -18,6 +18,9 @@ import { OrdersModule } from './orders/orders.module';
 import { Order } from 'orders/entities/order.entity';
 import { OrderItem } from 'orders/entities/order-item.entity';
 import { CommonModule } from 'common/common.module';
+import { PaymentsModule } from './payments/payments.module';
+import { Payment } from 'payments/entities/payments.entity';
+import { ScheduleModule } from '@nestjs/schedule';
 
 /**
  * 동적모듈 (forRoot): 설정을 필요로하는 동적인 모듈
@@ -62,6 +65,7 @@ import { CommonModule } from 'common/common.module';
         Menu,
         Order,
         OrderItem,
+        Payment,
       ],
     }),
     // forRoot: 동적모듈
@@ -77,6 +81,8 @@ import { CommonModule } from 'common/common.module';
         };
       },
     }),
+    // Cron Task 모듈
+    ScheduleModule.forRoot(),
     JwtModule.forRoot({ privateKey: process.env.PRIVATE_KEY }), // 정적모듈
     MailModule.forRoot({
       apiKey: process.env.MAILGUN_API_KEY,
@@ -88,6 +94,7 @@ import { CommonModule } from 'common/common.module';
     RestaurantsModule,
     OrdersModule,
     CommonModule,
+    PaymentsModule,
   ],
   controllers: [],
   providers: [],

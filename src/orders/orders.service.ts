@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   NEW_COOKED_ORDER,
+  NEW_ORDER_UPDATE,
   NEW_PENDING_ORDER,
   PUB_SUB,
 } from 'common/common.constant';
@@ -14,6 +15,7 @@ import { CreateOrderInput, CreateOrderOutput } from './dtos/create-order.dto';
 import { EditOrderInput, EditOrderOutput } from './dtos/edit-order.dto';
 import { GetOrderInput, GetOrderOutput } from './dtos/get-order.dto';
 import { GetOrdersInput, GetOrdersOutput } from './dtos/get-orders.dto';
+import { TakeOrderInput, TakeOrderOutput } from './dtos/take-order.dto';
 import { OrderItem } from './entities/order-item.entity';
 import { Order, OrderStatus } from './entities/order.entity';
 
@@ -280,12 +282,19 @@ export class OrderService {
         status,
       });
 
+      const newOrder: Order = { ...order, status };
+
       // 점장 일때만 그리고 변경 상태가 '요리완료' 일때 subscription 실행
       if (user.role === UserRole.Owner && status === OrderStatus.Cooked) {
         await this.pubSub.publish(NEW_COOKED_ORDER, {
-          cookedOrders: { ...order, status },
+          cookedOrders: newOrder,
         });
       }
+
+      await this.pubSub.publish(NEW_ORDER_UPDATE, {
+        orderUpdates: newOrder,
+      });
+
       return {
         ok: true,
       };
@@ -293,6 +302,52 @@ export class OrderService {
       return {
         ok: false,
         error: '주문내역 수정 할 수 없습니다',
+      };
+    }
+  }
+
+  async takeOrder(
+    driver: User,
+    { id: orderId }: TakeOrderInput,
+  ): Promise<TakeOrderOutput> {
+    try {
+      const order = await this.orders.findOne({ id: orderId });
+      if (!order) {
+        return {
+          ok: false,
+          error: '주문을 찾을 수 없습니다',
+        };
+      }
+
+      if (order.driver) {
+        return {
+          ok: false,
+          error: '이 주문은 이미 배달원이 존재 합니다',
+        };
+      }
+
+      if (driver.role !== UserRole.Delivery) {
+        return {
+          ok: false,
+          error: '해당 유저는 배달원이 아닙니다',
+        };
+      }
+
+      /** 주문 업데이트 */
+      await this.orders.save({ id: orderId, driver });
+
+      /** 업데이트된 주문을 관련있는 Client, Owner, Delivery에게 알리기(Subscription) */
+      await this.pubSub.publish(NEW_ORDER_UPDATE, {
+        orderUpdates: { ...order, driver },
+      });
+
+      return {
+        ok: true,
+      };
+    } catch {
+      return {
+        ok: false,
+        error: '주문을 수정 할 수 없습니다 🥲',
       };
     }
   }

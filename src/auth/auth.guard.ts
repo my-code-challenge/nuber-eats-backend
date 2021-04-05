@@ -1,4 +1,9 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { JwtService } from 'jwt/jwt.service';
@@ -34,10 +39,15 @@ export class AuthGuard implements CanActivate {
           if (roles.includes('Any')) {
             return true;
           }
-          return roles.includes(user.role);
+
+          if (roles.includes(user.role)) {
+            return true;
+          } else {
+            throw new UnauthorizedException(`${roles}만 접근 가능 합니다`);
+          }
         }
       }
     }
-    return false;
+    throw new UnauthorizedException('Token이 존재 하지 않습니다');
   }
 }
