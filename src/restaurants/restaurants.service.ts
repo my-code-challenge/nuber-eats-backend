@@ -19,6 +19,7 @@ import {
   EditRestaurantInput,
   EditRestaurantOutput,
 } from './dtos/edit-restaurant.dto';
+import { MyRestaurantsOutput } from './dtos/my-restaurants.dto';
 import { RestaurantInput, RestaurantOutput } from './dtos/restaurant.dto';
 import { RestaurantsInput, RestaurantsOutput } from './dtos/restaurants.dto';
 import {
@@ -32,7 +33,7 @@ import { CustomCategoryRepository } from './repositories/category.repository';
 
 @Injectable()
 export class RestaurantService {
-  private readonly pageView = 5;
+  private readonly pageView = 3;
   /**
    * @description - https://typeorm.io/#active-record-data-mapper/what-is-the-data-mapper-pattern
    * @param restaurants
@@ -179,6 +180,21 @@ export class RestaurantService {
       return {
         ok: false,
         error: '카테고리를 불러오는데 실패 하였습니다',
+      };
+    }
+  }
+
+  async myRestaurants(owner: User): Promise<MyRestaurantsOutput> {
+    try {
+      const restaurants = await this.restaurants.find({ owner });
+      return {
+        ok: true,
+        restaurants,
+      };
+    } catch {
+      return {
+        ok: false,
+        error: '음식점을 불러오는데 실패 하였습니다',
       };
     }
   }

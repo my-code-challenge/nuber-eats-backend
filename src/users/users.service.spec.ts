@@ -4,7 +4,7 @@ import { JwtService } from 'jwt/jwt.service';
 import { MailService } from 'mail/mail.service';
 import { Repository } from 'typeorm';
 import { CreateAccountInput } from './dtos/create-account.dto';
-import { User } from './entities/user.entity';
+import { User, UserRole } from './entities/user.entity';
 import { Verification } from './entities/verification.entity';
 import { UserService } from './users.service';
 
@@ -75,7 +75,7 @@ describe('UserService', () => {
     const createAccountArgs: CreateAccountInput = {
       email: '',
       password: '',
-      role: 0,
+      role: UserRole.Client,
     };
     it('should fail if exists', async () => {
       // promise function return => mockResolvedValue
